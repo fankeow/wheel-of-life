@@ -32,9 +32,9 @@ AREAS.forEach(a => { DEFAULT_SCORES[a.key] = 5; });
 // ─── AI ANALYSIS ─────────────────────────────────────────────────────────────
 async function fetchAIAnalysis(name, scores, avg, gap, highest3, lowest3) {
   const scoreLines = AREAS.map(a => `  ${a.label}: ${scores[a.key]}/10`).join("\n");
-  const prompt = `You are a thoughtful, direct life coach reviewing a Wheel of Life assessment. Address the person directly using "you" and "your" throughout — never refer to them in the third person. Be specific to their actual numbers. Never be generic.
+  const prompt = `You are a thoughtful, direct life coach reviewing a Wheel of Life assessment. Address the person directly using "you" and "your" throughout. Never refer to them in the third person. Be specific to their actual numbers. Never be generic.
 
-Important: if someone is scoring 7, 8, 9 or 10 across the board, they are genuinely thriving. Do not treat high scores as problems or frame them as growth areas. The question at that level is not "what's broken" — it's "what does the next level look like" or "what would it mean to go even deeper". Honour what's working.
+Important: if someone is scoring 7, 8, 9 or 10 across the board, they are genuinely thriving. Do not treat high scores as problems or frame them as growth areas. The question at that level is not "what's broken". It's "what does the next level look like" or "what would it mean to go even deeper". Honour what's working.
 
 Here are ${name}'s scores:
 ${scoreLines}
@@ -46,13 +46,13 @@ Lowest areas: ${lowest3.map(a => `${a.label} (${scores[a.key]})`).join(", ")}
 
 Write a JSON response with exactly these four keys. Use "you/your" throughout, never refer to the person by name or as "they/their":
 
-"pattern": 2-3 sentences. What does this overall pattern say about where you are in life right now? Be specific to the actual numbers. If scores are generally high, acknowledge that genuinely — what does thriving at this level actually look like, and what is the texture of life here?
+"pattern": 2-3 sentences. What does this overall pattern say about where you are in life right now? Be specific to the actual numbers. If scores are generally high, acknowledge that genuinely. What does thriving at this level actually look like, and what is the texture of life here?
 
-"focus": 2-3 sentences. Given these specific scores, where is the most meaningful place to direct attention — and why? Be honest and non-obvious. If everything is high, the question shifts to depth, sustainability, or what might be quietly being sacrificed to maintain this.
+"focus": 2-3 sentences. Given these specific scores, where is the most meaningful place to direct attention, and why? Be honest and non-obvious. If everything is high, the question shifts to depth, sustainability, or what might be quietly being sacrificed to maintain this.
 
 "connections": 2-3 sentences. How do these specific areas interact with each other? What tensions or quiet synergies exist between the highest and lowest scoring areas? Make this feel like a real observation, not a formula.
 
-"prompts": An array of exactly 3 coaching questions. Make them genuinely thought-provoking and specific to this person's actual pattern. Not generic. Not Googleable. Each question should make the person pause — the kind a great coach would ask after really reading the room.
+"prompts": An array of exactly 3 coaching questions. Make them genuinely thought-provoking and specific to this person's actual pattern. Not generic. Not Googleable. Each question should make the person pause. The kind a great coach would ask after really reading the room.
 
 Return only valid JSON. No markdown, no preamble, no explanation.`;
 
@@ -246,7 +246,7 @@ function ResultsCTAFooter() {
           onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}>
           <div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>Looking for 1-on-1 coaching?</div>
-            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>In Your Pocket — coaching when life and business are actually happening.</div>
+            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>In Your Pocket. Coaching when life and business are actually happening.</div>
           </div>
           <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "18px", marginLeft: "16px", flexShrink: 0 }}>↗</span>
         </a>
@@ -499,7 +499,7 @@ export default function WheelOfLife() {
             Where are you, <em style={{ fontStyle:"italic",color:"rgba(232,214,180,0.8)" }}>really?</em>
           </h1>
           <p style={{ fontSize:"15px",color:"rgba(255,255,255,0.45)",margin:"12px auto 0",lineHeight:1.75,maxWidth:"420px" }}>
-            Rate your satisfaction across 8 key life areas. Get an honest picture of where you are — and a coaching analysis written specifically for your pattern.
+            Rate your satisfaction across 8 key life areas. Get an honest picture of where you are, and a coaching analysis written specifically for your pattern.
           </p>
         </div>
       </div>
@@ -523,7 +523,7 @@ export default function WheelOfLife() {
         <div style={{ borderLeft:`3px solid ${C.accent}`,background:C.accentFaint,borderRadius:"0 12px 12px 0",padding:"18px 20px",marginTop:"16px" }}>
           <p style={{ fontFamily:"'Playfair Display',serif",fontSize:"15px",fontWeight:700,color:C.text,margin:0,lineHeight:1.6 }}>How it works</p>
           <p style={{ fontSize:"13px",color:C.muted,margin:"6px 0 0",lineHeight:1.75 }}>
-            Rate your satisfaction from 1 to 10 across 8 life areas. No right or wrong answers — go with your gut. Your results include a visual wheel, an AI coaching analysis written for your specific pattern, and a PDF to keep.
+            Rate your satisfaction from 1 to 10 across 8 life areas. No right or wrong answers, go with your gut. Your results include a visual wheel, a coaching analysis written for your specific pattern, and a PDF to keep.
           </p>
         </div>
 
