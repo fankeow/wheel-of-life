@@ -1,37 +1,40 @@
 import { useState, useEffect, useCallback } from "react";
 
-// ─── PALETTE (Whisper grey system) ───────────────────────────────────────────
+// ─── BOUNDARY SCRIPT PALETTE ─────────────────────────────────────────────────
 const C = {
-  bg:      "#F5F5F3",
-  bg2:     "#EEEEEC",
-  card:    "#FFFFFF",
-  border:  "rgba(0,0,0,0.07)",
-  border2: "rgba(0,0,0,0.12)",
-  text:    "#1C1C1C",
-  muted:   "#737373",
-  muted2:  "#A3A3A3",
-  dark:    "#1C1C1C",
+  bg:          "#E8E6DC",
+  bg2:         "#DDDBD0",
+  card:        "#FFFFFF",
+  border:      "rgba(44,36,22,0.08)",
+  border2:     "rgba(44,36,22,0.15)",
+  text:        "#2C2416",
+  muted:       "#6B5F45",
+  muted2:      "#9A8E78",
+  accent:      "#7A5C1E",
+  accentFaint: "rgba(122,92,30,0.08)",
+  dark:        "#1C1A12",
 };
 
 const AREAS = [
-  { key: "career",      label: "Career & Business",   icon: "💼", color: "#E8845C", desc: "Your satisfaction with your work, purpose, and professional growth" },
-  { key: "finances",    label: "Finances",             icon: "💰", color: "#D4793F", desc: "Your financial security, income, savings, and relationship with money" },
-  { key: "health",      label: "Health & Fitness",     icon: "🌿", color: "#4CAF80", desc: "Your physical wellbeing, energy levels, nutrition, and movement" },
-  { key: "fun",         label: "Fun & Recreation",     icon: "✨", color: "#7C6BC4", desc: "Joy, play, hobbies, and activities that light you up" },
-  { key: "environment", label: "Physical Environment", icon: "🏠", color: "#5B9BD5", desc: "Your living space, workspace, and surroundings" },
-  { key: "growth",      label: "Personal Growth",      icon: "📚", color: "#E8845C", desc: "Learning, self-awareness, mindset, and spiritual development" },
-  { key: "romance",     label: "Romance & Partner",    icon: "💕", color: "#C06B8A", desc: "Your romantic relationship or readiness for one" },
-  { key: "social",      label: "Family & Friends",     icon: "👥", color: "#7C6BC4", desc: "Your relationships with family, friends, and community" },
+  { key: "career",      label: "Career & Business",   icon: "💼", color: "#C4733A", desc: "Your satisfaction with your work, purpose, and professional growth" },
+  { key: "finances",    label: "Finances",             icon: "💰", color: "#A85D2A", desc: "Your financial security, income, savings, and relationship with money" },
+  { key: "health",      label: "Health & Fitness",     icon: "🌿", color: "#4A8C5C", desc: "Your physical wellbeing, energy levels, nutrition, and movement" },
+  { key: "fun",         label: "Fun & Recreation",     icon: "✨", color: "#7A5C1E", desc: "Joy, play, hobbies, and activities that light you up" },
+  { key: "environment", label: "Physical Environment", icon: "🏠", color: "#5B7FA8", desc: "Your living space, workspace, and surroundings" },
+  { key: "growth",      label: "Personal Growth",      icon: "📚", color: "#C4733A", desc: "Learning, self-awareness, mindset, and spiritual development" },
+  { key: "romance",     label: "Romance & Partner",    icon: "💕", color: "#A85C6E", desc: "Your romantic relationship or readiness for one" },
+  { key: "social",      label: "Family & Friends",     icon: "👥", color: "#7A5C1E", desc: "Your relationships with family, friends, and community" },
 ];
 
 const DEFAULT_SCORES = {};
 AREAS.forEach(a => { DEFAULT_SCORES[a.key] = 5; });
 
 // ─── AI ANALYSIS ─────────────────────────────────────────────────────────────
-// Calls your Vercel API route at /api/analyse (which holds your Anthropic key)
 async function fetchAIAnalysis(name, scores, avg, gap, highest3, lowest3) {
   const scoreLines = AREAS.map(a => `  ${a.label}: ${scores[a.key]}/10`).join("\n");
-  const prompt = `You are a thoughtful life coach reviewing a Wheel of Life assessment. Be direct, specific, and genuinely useful. Never be generic. Honour high scores — someone scoring 8, 9, or 10 across the board is thriving and needs a different conversation than someone scoring 3s and 4s.
+  const prompt = `You are a thoughtful, direct life coach reviewing a Wheel of Life assessment. Address the person directly using "you" and "your" throughout — never refer to them in the third person. Be specific to their actual numbers. Never be generic.
+
+Important: if someone is scoring 7, 8, 9 or 10 across the board, they are genuinely thriving. Do not treat high scores as problems or frame them as growth areas. The question at that level is not "what's broken" — it's "what does the next level look like" or "what would it mean to go even deeper". Honour what's working.
 
 Here are ${name}'s scores:
 ${scoreLines}
@@ -41,27 +44,49 @@ Balance gap (highest minus lowest): ${gap} points
 Highest areas: ${highest3.map(a => `${a.label} (${scores[a.key]})`).join(", ")}
 Lowest areas: ${lowest3.map(a => `${a.label} (${scores[a.key]})`).join(", ")}
 
-Write a JSON response with exactly these four keys:
+Write a JSON response with exactly these four keys. Use "you/your" throughout, never refer to the person by name or as "they/their":
 
-"pattern": 2-3 sentences. What does this overall pattern say about where ${name} is in life right now? Be specific to the actual numbers — don't treat a 8 as a problem area. If scores are generally high, acknowledge that genuinely and talk about what thriving at this level actually looks like.
+"pattern": 2-3 sentences. What does this overall pattern say about where you are in life right now? Be specific to the actual numbers. If scores are generally high, acknowledge that genuinely — what does thriving at this level actually look like, and what is the texture of life here?
 
-"focus": 2-3 sentences. Given these specific scores, where is the most meaningful place to direct attention — and why? If all scores are high, the question shifts from "what's broken" to "what's the ceiling" or "what would 10 feel like". Be honest and non-obvious.
+"focus": 2-3 sentences. Given these specific scores, where is the most meaningful place to direct attention — and why? Be honest and non-obvious. If everything is high, the question shifts to depth, sustainability, or what might be quietly being sacrificed to maintain this.
 
-"connections": 3 sentences. How do these specific areas interact with each other? What tensions or synergies exist between the highest and lowest? Make this feel like insight, not a formula.
+"connections": 2-3 sentences. How do these specific areas interact with each other? What tensions or quiet synergies exist between the highest and lowest scoring areas? Make this feel like a real observation, not a formula.
 
-"prompts": An array of exactly 3 coaching questions. These should be genuinely thought-provoking, specific to ${name}'s actual pattern, and NOT generic. If someone scores 9 in Career and 8 in Fun, don't ask "what would a 10 in Fun look like" — go deeper. Make each question one they couldn't have Googled.
+"prompts": An array of exactly 3 coaching questions. Make them genuinely thought-provoking and specific to this person's actual pattern. Not generic. Not Googleable. Each question should make the person pause — the kind a great coach would ask after really reading the room.
 
-Return only valid JSON. No markdown, no preamble.`;
+Return only valid JSON. No markdown, no preamble, no explanation.`;
 
   const res = await fetch("/api/analyse", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt }),
   });
-
   if (!res.ok) throw new Error("API request failed");
-  const data = await res.json();
-  return data;
+  return await res.json();
+}
+
+// ─── NAV BAR ─────────────────────────────────────────────────────────────────
+function NavBar() {
+  return (
+    <nav style={{
+      position: "sticky", top: 0, zIndex: 100,
+      background: "rgba(232,230,220,0.92)",
+      backdropFilter: "blur(12px)",
+      borderBottom: `1px solid ${C.border}`,
+      padding: "14px 28px",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ width: "28px", height: "28px", borderRadius: "50%", border: `1.5px solid ${C.text}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "8px", height: "8px", borderRadius: "50%", border: `1.5px solid ${C.text}` }} />
+        </div>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "13px", fontWeight: 600, color: C.text, letterSpacing: "0.06em", textTransform: "uppercase" }}>The Circle</span>
+      </div>
+      <div style={{ padding: "6px 16px", border: `1px solid ${C.border2}`, borderRadius: "100px", fontSize: "11px", fontWeight: 600, color: C.muted, letterSpacing: "0.06em", fontFamily: "'DM Sans', sans-serif" }}>
+        Member Resource
+      </div>
+    </nav>
+  );
 }
 
 // ─── RADAR CHART ─────────────────────────────────────────────────────────────
@@ -78,15 +103,17 @@ function RadarChart({ scores }) {
   const gridLines = [];
   for (let l = 1; l <= 10; l++) {
     const pts = AREAS.map((_, i) => { const p = getPoint(i, l); return `${p.x},${p.y}`; });
-    gridLines.push(<polygon key={l} points={pts.join(" ")} fill="none" stroke={l % 5 === 0 ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.04)"} strokeWidth={l % 5 === 0 ? 1.2 : 0.7} />);
+    gridLines.push(<polygon key={l} points={pts.join(" ")} fill="none"
+      stroke={l % 5 === 0 ? "rgba(44,36,22,0.15)" : "rgba(44,36,22,0.05)"}
+      strokeWidth={l % 5 === 0 ? 1.2 : 0.7} />);
   }
   const dataPoints = AREAS.map((a, i) => getPoint(i, scores[a.key] || 0));
   const dataPath = dataPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ") + "Z";
   return (
     <svg width="100%" viewBox={`0 0 ${vb} ${vb}`} style={{ maxWidth: "480px", display: "block", margin: "0 auto" }}>
       {gridLines}
-      {AREAS.map((_, i) => { const p = getPoint(i, 10); return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="rgba(0,0,0,0.06)" strokeWidth="0.8" />; })}
-      <path d={dataPath} fill="rgba(28,28,28,0.06)" stroke={C.dark} strokeWidth="2" strokeLinejoin="round" />
+      {AREAS.map((_, i) => { const p = getPoint(i, 10); return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="rgba(44,36,22,0.07)" strokeWidth="0.8" />; })}
+      <path d={dataPath} fill="rgba(122,92,30,0.1)" stroke={C.accent} strokeWidth="2" strokeLinejoin="round" />
       {dataPoints.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={5} fill={AREAS[i].color} stroke="#fff" strokeWidth="2.5" />)}
       {AREAS.map((a, i) => {
         const p = getLabelPos(i);
@@ -146,9 +173,9 @@ function AIAnalysisSection({ analysis, loading, error }) {
     <div style={{ marginTop: "28px", background: C.card, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "36px 24px", textAlign: "center" }}>
       <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: C.muted2, marginBottom: "16px" }}>COACHING ANALYSIS</div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
-        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: C.muted2, animation: "pulse 1.2s ease-in-out infinite" }} />
-        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: C.muted2, animation: "pulse 1.2s ease-in-out 0.2s infinite" }} />
-        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: C.muted2, animation: "pulse 1.2s ease-in-out 0.4s infinite" }} />
+        {[0, 0.2, 0.4].map((delay, i) => (
+          <div key={i} style={{ width: "8px", height: "8px", borderRadius: "50%", background: C.muted2, animation: `pulse 1.2s ease-in-out ${delay}s infinite` }} />
+        ))}
       </div>
       <p style={{ fontSize: "13px", color: C.muted2, margin: "16px 0 0" }}>Reading your results and writing your coaching analysis...</p>
     </div>
@@ -156,8 +183,8 @@ function AIAnalysisSection({ analysis, loading, error }) {
 
   if (error) return (
     <div style={{ marginTop: "28px", background: C.card, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "24px" }}>
-      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#E8845C", marginBottom: "8px" }}>ANALYSIS UNAVAILABLE</div>
-      <p style={{ fontSize: "13px", color: C.muted, margin: 0, lineHeight: 1.6 }}>The AI coaching analysis couldn't load right now. Your scores and chart above are still accurate. Try refreshing the page or check your API configuration.</p>
+      <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: "#C4733A", marginBottom: "8px" }}>ANALYSIS UNAVAILABLE</div>
+      <p style={{ fontSize: "13px", color: C.muted, margin: 0, lineHeight: 1.6 }}>The coaching analysis couldn't load right now. Your scores and chart are still accurate. Try refreshing the page.</p>
     </div>
   );
 
@@ -167,29 +194,25 @@ function AIAnalysisSection({ analysis, loading, error }) {
     <div style={{ marginTop: "28px" }}>
       <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: C.muted2, marginBottom: "14px" }}>COACHING ANALYSIS</div>
 
-      {/* Pattern */}
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "24px 26px", marginBottom: "12px" }}>
-        <div style={{ fontSize: "11px", fontWeight: 700, color: C.muted2, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>Your pattern</div>
-        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 400, color: C.text, margin: 0, lineHeight: 1.75 }}>{analysis.pattern}</p>
+        <div style={{ fontSize: "10px", fontWeight: 700, color: C.muted2, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>Your pattern</div>
+        <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "16px", fontWeight: 400, color: C.text, margin: 0, lineHeight: 1.8 }}>{analysis.pattern}</p>
       </div>
 
-      {/* Focus */}
-      <div style={{ borderLeft: `3px solid ${C.dark}`, background: C.bg2, borderRadius: "0 12px 12px 0", padding: "22px 24px", marginBottom: "12px" }}>
-        <div style={{ fontSize: "11px", fontWeight: 700, color: C.muted2, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>Where to focus</div>
-        <p style={{ fontSize: "14px", color: C.text, margin: 0, lineHeight: 1.75 }}>{analysis.focus}</p>
+      <div style={{ borderLeft: `3px solid ${C.accent}`, background: C.accentFaint, borderRadius: "0 12px 12px 0", padding: "22px 24px", marginBottom: "12px" }}>
+        <div style={{ fontSize: "10px", fontWeight: 700, color: C.muted2, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>Where to focus</div>
+        <p style={{ fontSize: "14px", color: C.text, margin: 0, lineHeight: 1.8 }}>{analysis.focus}</p>
       </div>
 
-      {/* Connections */}
       <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: "14px", padding: "24px 26px", marginBottom: "12px" }}>
-        <div style={{ fontSize: "11px", fontWeight: 700, color: C.muted2, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>How your areas connect</div>
-        <p style={{ fontSize: "14px", color: C.text, margin: 0, lineHeight: 1.75 }}>{analysis.connections}</p>
+        <div style={{ fontSize: "10px", fontWeight: 700, color: C.muted2, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "10px" }}>How your areas connect</div>
+        <p style={{ fontSize: "14px", color: C.text, margin: 0, lineHeight: 1.8 }}>{analysis.connections}</p>
       </div>
 
-      {/* Prompts */}
       <div style={{ marginTop: "4px" }}>
         <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "9px", fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: C.muted2, marginBottom: "14px" }}>REFLECTION PROMPTS</div>
         {(analysis.prompts || []).map((q, i) => (
-          <div key={i} style={{ border: `2px dashed ${["#E8845C","#4CAF80",C.dark][i]}`, borderRadius: "12px", padding: "16px 20px", background: `${["#E8845C","#4CAF80","#1C1C1C"][i]}0D`, marginBottom: "10px" }}>
+          <div key={i} style={{ border: `2px dashed ${[C.accent, "#4A8C5C", C.text][i]}`, borderRadius: "12px", padding: "16px 20px", background: `${[C.accent, "#4A8C5C", C.text][i]}0D`, marginBottom: "10px" }}>
             <p style={{ fontFamily: "'Playfair Display', serif", fontSize: "15px", fontWeight: 700, color: C.text, margin: 0, lineHeight: 1.5 }}>{q}</p>
           </div>
         ))}
@@ -201,37 +224,37 @@ function AIAnalysisSection({ analysis, loading, error }) {
 // ─── RESULTS CTA FOOTER ───────────────────────────────────────────────────────
 function ResultsCTAFooter() {
   return (
-    <div style={{ background: C.dark, padding: "48px 20px 36px", marginTop: "48px", position: "relative", overflow: "hidden" }}>
+    <div style={{ background: C.dark, padding: "48px 24px 36px", position: "relative", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(90deg,rgba(255,255,255,0.015) 0,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 60px),repeating-linear-gradient(0deg,rgba(255,255,255,0.015) 0,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 60px)" }} />
       <div style={{ position: "relative", zIndex: 1, maxWidth: "560px", margin: "0 auto" }}>
         <div style={{ fontFamily: "'Space Mono', monospace", fontSize: "9px", fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: "rgba(255,255,255,0.35)", marginBottom: "20px", textAlign: "center" }}>WHAT'S NEXT FOR YOU</div>
 
-        {/* The Circle */}
         <a href="https://dannybunny.co/circle" target="_blank" rel="noopener noreferrer"
           style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "14px", padding: "22px 24px", marginBottom: "12px", textDecoration: "none", cursor: "pointer" }}
           onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}>
           <div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>The Circle</div>
-            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>A dojo for personal sovereignty in the age of everything.</div>
+            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>A dojo for personal sovereignty in the age of everything.</div>
           </div>
-          <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "18px", marginLeft: "16px", flexShrink: 0 }}>↗</span>
+          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "18px", marginLeft: "16px", flexShrink: 0 }}>↗</span>
         </a>
 
-        {/* In Your Pocket */}
         <a href="https://dannybunny.co/pocket" target="_blank" rel="noopener noreferrer"
           style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", padding: "22px 24px", textDecoration: "none", cursor: "pointer" }}
           onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
           onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}>
           <div>
             <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>Looking for 1-on-1 coaching?</div>
-            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>In Your Pocket — coaching when life and business are actually happening.</div>
+            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>In Your Pocket — coaching when life and business are actually happening.</div>
           </div>
-          <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "18px", marginLeft: "16px", flexShrink: 0 }}>↗</span>
+          <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "18px", marginLeft: "16px", flexShrink: 0 }}>↗</span>
         </a>
 
-        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.2)", textAlign: "center", margin: "24px 0 0" }}>
-          A Circle member resource · dannybunny.co/circle
+        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", textAlign: "center", margin: "28px 0 0", lineHeight: 1.6 }}>
+          A tool for members of{" "}
+          <a href="https://dannybunny.co/circle" target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.65)", textDecoration: "underline", textUnderlineOffset: "3px" }}>The Circle</a>
+          {" "}· Personal sovereignty in practice.
         </p>
       </div>
     </div>
@@ -261,7 +284,7 @@ function TreeAnimation() {
         <ellipse cx="200" cy="100" rx="40" ry="35" fill="url(#lg2)" opacity="0.75"><animate attributeName="rx" values="40;42;40" dur="6.5s" repeatCount="indefinite" /></ellipse>
       </g>
       <g style={{ animation: "canopyGrow 0.8s ease-out 1.8s both", transformOrigin: "200px 140px" }}>
-        {[{cx:125,cy:158,r:5,c:"#E8845C"},{cx:275,cy:155,r:5,c:"#D4793F"},{cx:148,cy:118,r:4.5,c:"#4CAF80"},{cx:255,cy:115,r:4.5,c:"#7C6BC4"},{cx:200,cy:78,r:4.5,c:"#E8845C"},{cx:200,cy:145,r:4,c:"#5B9BD5"}].map((d,i)=>(
+        {[{cx:125,cy:158,r:5,c:"#C4733A"},{cx:275,cy:155,r:5,c:"#7A5C1E"},{cx:148,cy:118,r:4.5,c:"#4A8C5C"},{cx:255,cy:115,r:4.5,c:"#7A5C1E"},{cx:200,cy:78,r:4.5,c:"#C4733A"},{cx:200,cy:145,r:4,c:"#5B7FA8"}].map((d,i)=>(
           <circle key={i} cx={d.cx} cy={d.cy} r={d.r} fill={d.c} opacity="0.9" style={{ animation:`gentlePulse ${3+i*0.3}s ease-in-out ${2+i*0.2}s infinite` }} />
         ))}
       </g>
@@ -287,15 +310,14 @@ export default function WheelOfLife() {
     return () => clearTimeout(t);
   }, [phase]);
 
-  // Trigger AI analysis when results phase loads
   useEffect(() => {
     if (phase !== "results") return;
     setAiLoading(true);
     setAiError(false);
     setAiAnalysis(null);
-    const sorted = [...AREAS].sort((a, b) => scores[a.key] - scores[b.key]);
-    const l3 = sorted.slice(0, 3);
-    const h3 = sorted.slice(-3).reverse();
+    const s = [...AREAS].sort((a, b) => scores[a.key] - scores[b.key]);
+    const l3 = s.slice(0, 3);
+    const h3 = s.slice(-3).reverse();
     const av = (Object.values(scores).reduce((a, b) => a + b, 0) / AREAS.length).toFixed(1);
     const gp = scores[h3[0]?.key] - scores[l3[0]?.key];
     fetchAIAnalysis(name, scores, av, gp, h3, l3)
@@ -337,12 +359,12 @@ export default function WheelOfLife() {
       const hexRgb = h => { const c = h.replace("#",""); return [parseInt(c.substr(0,2),16),parseInt(c.substr(2,2),16),parseInt(c.substr(4,2),16)]; };
 
       // Dark header
-      pdf.setFillColor(28,28,28); pdf.rect(0,0,W,44,"F");
-      pdf.setTextColor(163,163,163); pdf.setFontSize(7); pdf.setFont("helvetica","bold");
+      pdf.setFillColor(28,26,18); pdf.rect(0,0,W,44,"F");
+      pdf.setTextColor(154,142,120); pdf.setFontSize(7); pdf.setFont("helvetica","bold");
       pdf.text("THE CIRCLE  ·  WHEEL OF LIFE ASSESSMENT", margin, 14);
       pdf.setTextColor(255,255,255); pdf.setFontSize(22);
       pdf.text(`${name}'s Results`, margin, 28);
-      pdf.setTextColor(115,115,115); pdf.setFontSize(9); pdf.setFont("helvetica","normal");
+      pdf.setTextColor(107,95,69); pdf.setFontSize(9); pdf.setFont("helvetica","normal");
       pdf.text(today, margin, 37);
       y = 50;
 
@@ -354,7 +376,7 @@ export default function WheelOfLife() {
         if (img) {
           const canvas = document.createElement("canvas"); canvas.width=1200; canvas.height=1200;
           const ctx = canvas.getContext("2d");
-          ctx.fillStyle="#F5F5F3"; ctx.fillRect(0,0,1200,1200);
+          ctx.fillStyle="#E8E6DC"; ctx.fillRect(0,0,1200,1200);
           ctx.drawImage(img,0,0,1200,1200);
           const chartW = 120;
           pdf.addImage(canvas.toDataURL("image/png"),"PNG",(W-chartW)/2,y,chartW,chartW);
@@ -362,12 +384,12 @@ export default function WheelOfLife() {
         }
       }
 
-      // Scores
-      pdf.setTextColor(115,115,115); pdf.setFontSize(7); pdf.setFont("helvetica","bold");
+      // Detailed scores
+      pdf.setTextColor(107,95,69); pdf.setFontSize(7); pdf.setFont("helvetica","bold");
       pdf.text("DETAILED SCORES", margin, y); y += 5;
       [...AREAS].sort((a,b)=>scores[b.key]-scores[a.key]).forEach(area => {
         const score = scores[area.key], [r,g,b_] = hexRgb(area.color);
-        pdf.setFillColor(238,238,236); pdf.roundedRect(margin,y,cw,7,1.5,1.5,"F");
+        pdf.setFillColor(221,219,208); pdf.roundedRect(margin,y,cw,7,1.5,1.5,"F");
         const fw = Math.max(1,(score/10)*(cw-40));
         pdf.setFillColor(r,g,b_); pdf.roundedRect(margin,y,fw,7,1.5,1.5,"F");
         pdf.setTextColor(255,255,255); pdf.setFontSize(6.5); pdf.setFont("helvetica","bold");
@@ -380,13 +402,13 @@ export default function WheelOfLife() {
 
       // Strengths / Growth / Metrics
       const colW = (cw-6)/3;
-      [[highest3,"YOUR STRENGTHS",[76,175,128]],[lowest3,"GROWTH AREAS",[232,132,92]],[null,"KEY METRICS",[115,115,115]]].forEach(([arr,title,[r,g,b_]],ci) => {
+      [[highest3,"YOUR STRENGTHS",[74,140,92]],[lowest3,"GROWTH AREAS",[196,115,58]],[null,"KEY METRICS",[107,95,69]]].forEach(([arr,title,[r,g,b_]],ci) => {
         const cx_ = margin+(colW+3)*ci;
         pdf.setFillColor(255,255,255); pdf.roundedRect(cx_,y,colW,32,2,2,"F");
         pdf.setFillColor(r,g,b_); pdf.rect(cx_,y,colW,2,"F");
         pdf.setTextColor(r,g,b_); pdf.setFontSize(6); pdf.setFont("helvetica","bold");
         pdf.text(title,cx_+4,y+8);
-        pdf.setTextColor(28,28,28); pdf.setFontSize(7.5); pdf.setFont("helvetica","normal");
+        pdf.setTextColor(44,36,22); pdf.setFontSize(7.5); pdf.setFont("helvetica","normal");
         if (arr) arr.forEach((a,i)=>pdf.text(`${a.label}: ${scores[a.key]}/10`,cx_+4,y+14+i*6));
         else {
           pdf.text(`Average: ${avg}/10`,cx_+4,y+14);
@@ -396,47 +418,51 @@ export default function WheelOfLife() {
       });
       y += 38;
 
-      // AI Analysis in PDF (if loaded)
+      // AI Analysis
       if (aiAnalysis) {
-        pdf.setFillColor(28,28,28); pdf.rect(margin,y,2,3,"F");
-        pdf.setTextColor(115,115,115); pdf.setFontSize(7); pdf.setFont("helvetica","bold");
-        pdf.text("COACHING ANALYSIS", margin+6, y+2); y += 7;
+        pdf.setFillColor(122,92,30); pdf.rect(margin,y,cw,0.5,"F");
+        y += 6;
+        pdf.setTextColor(107,95,69); pdf.setFontSize(7); pdf.setFont("helvetica","bold");
+        pdf.text("COACHING ANALYSIS", margin, y); y += 7;
 
-        const sections = [
-          { label: "Your pattern", text: aiAnalysis.pattern },
-          { label: "Where to focus", text: aiAnalysis.focus },
-          { label: "How your areas connect", text: aiAnalysis.connections },
-        ];
-        sections.forEach(({ label, text }) => {
-          pdf.setTextColor(115,115,115); pdf.setFontSize(6); pdf.setFont("helvetica","bold");
-          pdf.text(label.toUpperCase(), margin, y); y += 4;
-          pdf.setTextColor(28,28,28); pdf.setFontSize(8); pdf.setFont("helvetica","normal");
+        [
+          { label: "YOUR PATTERN", text: aiAnalysis.pattern },
+          { label: "WHERE TO FOCUS", text: aiAnalysis.focus },
+          { label: "HOW YOUR AREAS CONNECT", text: aiAnalysis.connections },
+        ].forEach(({ label, text }) => {
+          if (y > 262) { pdf.addPage(); y = 18; }
+          pdf.setFillColor(122,92,30); pdf.rect(margin,y,2,3,"F");
+          pdf.setTextColor(107,95,69); pdf.setFontSize(6); pdf.setFont("helvetica","bold");
+          pdf.text(label, margin+5, y+2.5); y += 6;
+          pdf.setTextColor(44,36,22); pdf.setFontSize(8.5); pdf.setFont("helvetica","normal");
           const lines = pdf.splitTextToSize(text, cw);
           pdf.text(lines, margin, y);
-          y += lines.length * 4 + 5;
+          y += lines.length * 5 + 6;
         });
 
         if (aiAnalysis.prompts?.length) {
-          pdf.setTextColor(115,115,115); pdf.setFontSize(7); pdf.setFont("helvetica","bold");
+          if (y > 245) { pdf.addPage(); y = 18; }
+          pdf.setTextColor(107,95,69); pdf.setFontSize(7); pdf.setFont("helvetica","bold");
           pdf.text("REFLECTION PROMPTS", margin, y); y += 5;
-          aiAnalysis.prompts.forEach((q, i) => {
-            const [r,g,b_] = [[232,132,92],[76,175,128],[28,28,28]][i];
-            pdf.setFillColor(r,g,b_); pdf.rect(margin,y,2,16,"F");
-            pdf.setFillColor(255,255,255); pdf.roundedRect(margin+2,y,cw-2,16,0,0,"F");
-            pdf.setTextColor(28,28,28); pdf.setFontSize(7.5); pdf.setFont("helvetica","bold");
-            pdf.text(q, margin+6, y+5, { maxWidth: cw-12 });
-            pdf.setDrawColor(220,220,218); pdf.setLineWidth(0.2);
-            pdf.line(margin+6,y+12,margin+cw-6,y+12);
-            y += 19;
+          [[122,92,30],[74,140,92],[44,36,22]].forEach(([r,g,b_], i) => {
+            if (!aiAnalysis.prompts[i]) return;
+            if (y > 268) { pdf.addPage(); y = 18; }
+            pdf.setFillColor(r,g,b_); pdf.rect(margin,y,2,18,"F");
+            pdf.setFillColor(255,255,255); pdf.roundedRect(margin+2,y,cw-2,18,0,0,"F");
+            pdf.setTextColor(44,36,22); pdf.setFontSize(7.5); pdf.setFont("helvetica","bold");
+            pdf.text(aiAnalysis.prompts[i], margin+6, y+5, { maxWidth: cw-12 });
+            pdf.setDrawColor(200,196,188); pdf.setLineWidth(0.2);
+            pdf.line(margin+6,y+13,margin+cw-6,y+13);
+            y += 21;
           });
         }
       }
 
       // Footer
-      y += 4;
-      pdf.setDrawColor(200,200,198); pdf.setLineWidth(0.3); pdf.line(margin,y,W-margin,y); y += 5;
-      pdf.setTextColor(163,163,163); pdf.setFontSize(7); pdf.setFont("helvetica","normal");
-      pdf.text(`Wheel of Life  ·  The Circle  ·  ${today}  ·  dannybunny.co/circle`, W/2, y, { align:"center" });
+      const footerY = Math.max(y + 6, 278);
+      pdf.setDrawColor(180,174,158); pdf.setLineWidth(0.3); pdf.line(margin,footerY,W-margin,footerY);
+      pdf.setTextColor(154,142,120); pdf.setFontSize(7); pdf.setFont("helvetica","normal");
+      pdf.text(`Wheel of Life  ·  The Circle  ·  ${today}  ·  dannybunny.co/circle`, W/2, footerY+5, { align:"center" });
 
       pdf.save(`Wheel-of-Life-${name||"Assessment"}.pdf`);
     } catch(err) {
@@ -447,10 +473,10 @@ export default function WheelOfLife() {
   }, [name, scores, avg, gap, highest3, lowest3, today, aiAnalysis]);
 
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=DM+Sans:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap');
-    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#1C1C1C;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.18);cursor:pointer;transition:transform 0.15s}
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,800;1,400;1,700&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:${C.accent};border:3px solid #fff;box-shadow:0 2px 8px rgba(122,92,30,0.3);cursor:pointer;transition:transform 0.15s}
     input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2)}
-    input[type="range"]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#1C1C1C;border:3px solid #fff;cursor:pointer}
+    input[type="range"]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:${C.accent};border:3px solid #fff;cursor:pointer}
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     @keyframes scaleIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
     @keyframes treeFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -461,45 +487,50 @@ export default function WheelOfLife() {
 
   // ── WELCOME ──
   if (phase === "welcome") return (
-    <div style={{ minHeight:"100vh",background:C.bg,fontFamily:"'DM Sans',sans-serif" }}>
+    <div style={{ minHeight:"100vh", background:C.bg, fontFamily:"'DM Sans',sans-serif" }}>
       <style>{css}</style>
-      <div style={{ background:C.dark,padding:"50px 20px 60px",textAlign:"center",position:"relative",overflow:"hidden" }}>
+      <NavBar />
+      <div style={{ background:C.dark, padding:"50px 20px 60px", textAlign:"center", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute",inset:0,backgroundImage:"repeating-linear-gradient(90deg,rgba(255,255,255,0.015) 0,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 60px),repeating-linear-gradient(0deg,rgba(255,255,255,0.015) 0,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 60px)" }} />
         <div style={{ position:"relative",zIndex:1,maxWidth:"680px",margin:"0 auto" }}>
           <TreeAnimation />
-          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",fontWeight:700,letterSpacing:"3px",textTransform:"uppercase",color:"rgba(255,255,255,0.35)",marginBottom:"12px" }}>THE CIRCLE · MEMBER RESOURCE</div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif",fontSize:"36px",fontWeight:800,color:"#fff",margin:"0 0 8px",lineHeight:1.2 }}>
-            Wheel of <em style={{ fontStyle:"italic",color:"rgba(255,255,255,0.55)" }}>Life</em>
+          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",fontWeight:700,letterSpacing:"3px",textTransform:"uppercase",color:"rgba(255,255,255,0.35)",marginBottom:"12px" }}>THE CIRCLE · WHEEL OF LIFE</div>
+          <h1 style={{ fontFamily:"'Playfair Display',serif",fontSize:"38px",fontWeight:800,color:"#fff",margin:"0 0 8px",lineHeight:1.15 }}>
+            Where are you, <em style={{ fontStyle:"italic",color:"rgba(232,214,180,0.8)" }}>really?</em>
           </h1>
-          <p style={{ fontSize:"15px",color:"rgba(255,255,255,0.45)",margin:"12px auto 0",lineHeight:1.7,maxWidth:"460px" }}>
-            Rate your satisfaction across 8 key life areas to reveal your balance, identify gaps, and discover where to focus next.
+          <p style={{ fontSize:"15px",color:"rgba(255,255,255,0.45)",margin:"12px auto 0",lineHeight:1.75,maxWidth:"420px" }}>
+            Rate your satisfaction across 8 key life areas. Get an honest picture of where you are — and a coaching analysis written specifically for your pattern.
           </p>
         </div>
       </div>
 
-      <div style={{ maxWidth:"480px",margin:"-30px auto 60px",padding:"0 20px",animation:animateIn?"fadeUp 0.5s ease forwards":"none",opacity:animateIn?1:0 }}>
-        <div style={{ background:C.card,borderRadius:"16px",border:`1px solid ${C.border}`,padding:"36px 32px",boxShadow:"0 4px 20px rgba(0,0,0,0.06)" }}>
+      <div style={{ maxWidth:"480px",margin:"-30px auto 0",padding:"0 20px 60px",animation:animateIn?"fadeUp 0.5s ease forwards":"none",opacity:animateIn?1:0 }}>
+        <div style={{ background:C.card,borderRadius:"16px",border:`1px solid ${C.border}`,padding:"36px 32px",boxShadow:"0 4px 24px rgba(44,36,22,0.08)" }}>
           <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",fontWeight:700,letterSpacing:"1.5px",textTransform:"uppercase",color:C.muted2,marginBottom:"16px" }}>GET STARTED</div>
           <label style={{ fontSize:"14px",fontWeight:600,color:C.text,display:"block",marginBottom:"10px" }}>What's your name?</label>
           <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="Enter your name"
             style={{ width:"100%",padding:"14px 16px",border:`1px solid ${C.border2}`,borderRadius:"10px",fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:C.text,background:C.bg,outline:"none",boxSizing:"border-box" }}
-            onFocus={e=>e.target.style.borderColor=C.dark}
+            onFocus={e=>e.target.style.borderColor=C.accent}
             onBlur={e=>e.target.style.borderColor=C.border2}
             onKeyDown={e=>e.key==="Enter"&&name.trim()&&setPhase("assess")} />
-          <p style={{ fontSize:"12px",color:C.muted2,margin:"10px 0 24px",lineHeight:1.5 }}>Your name will appear on your personalised results and PDF download.</p>
+          <p style={{ fontSize:"12px",color:C.muted2,margin:"10px 0 24px",lineHeight:1.5 }}>Your name will appear on your personalised results and PDF.</p>
           <button onClick={()=>{if(name.trim())setPhase("assess");}} disabled={!name.trim()}
-            style={{ width:"100%",padding:"15px 36px",background:name.trim()?C.dark:"#E5E5E3",color:name.trim()?"#fff":C.muted2,fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:"15px",border:"none",borderRadius:"50px",cursor:name.trim()?"pointer":"default",transition:"all 0.2s" }}>
+            style={{ width:"100%",padding:"15px 36px",background:name.trim()?C.accent:"#C8C4B4",color:"#fff",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:"15px",border:"none",borderRadius:"8px",cursor:name.trim()?"pointer":"default",transition:"all 0.2s" }}>
             Begin Assessment →
           </button>
         </div>
-        <div style={{ borderLeft:`3px solid ${C.dark}`,background:C.bg2,borderRadius:"0 12px 12px 0",padding:"18px 20px",marginTop:"20px" }}>
+
+        <div style={{ borderLeft:`3px solid ${C.accent}`,background:C.accentFaint,borderRadius:"0 12px 12px 0",padding:"18px 20px",marginTop:"16px" }}>
           <p style={{ fontFamily:"'Playfair Display',serif",fontSize:"15px",fontWeight:700,color:C.text,margin:0,lineHeight:1.6 }}>How it works</p>
-          <p style={{ fontSize:"13px",color:C.muted,margin:"6px 0 0",lineHeight:1.7 }}>
-            Rate your satisfaction from 1 to 10 across 8 life areas. No right or wrong answers — go with your gut. Your results include a visual wheel, an AI-written coaching analysis specific to your pattern, and a PDF to keep.
+          <p style={{ fontSize:"13px",color:C.muted,margin:"6px 0 0",lineHeight:1.75 }}>
+            Rate your satisfaction from 1 to 10 across 8 life areas. No right or wrong answers — go with your gut. Your results include a visual wheel, an AI coaching analysis written for your specific pattern, and a PDF to keep.
           </p>
         </div>
-        <p style={{ fontSize:"11px",color:C.muted2,textAlign:"center",margin:"20px 0 0" }}>
-          A Circle member resource · <a href="https://dannybunny.co/circle" style={{ color:C.muted,textDecoration:"none" }}>dannybunny.co/circle</a>
+
+        <p style={{ fontSize:"12px",color:C.muted2,textAlign:"center",margin:"24px 0 0",lineHeight:1.7 }}>
+          A tool for members of{" "}
+          <a href="https://dannybunny.co/circle" target="_blank" rel="noopener noreferrer" style={{ color:C.muted,textDecoration:"underline",textUnderlineOffset:"3px" }}>The Circle</a>
+          {" "}· Personal sovereignty in practice.
         </p>
       </div>
     </div>
@@ -511,7 +542,8 @@ export default function WheelOfLife() {
     return (
       <div style={{ minHeight:"100vh",background:C.bg,fontFamily:"'DM Sans',sans-serif" }}>
         <style>{css}</style>
-        <div style={{ background:C.dark,padding:"28px 20px 18px",position:"relative",overflow:"hidden" }}>
+        <NavBar />
+        <div style={{ background:C.dark,padding:"24px 20px 16px",position:"relative",overflow:"hidden" }}>
           <div style={{ position:"absolute",inset:0,backgroundImage:"repeating-linear-gradient(90deg,rgba(255,255,255,0.015) 0,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 60px)" }} />
           <div style={{ position:"relative",zIndex:1,maxWidth:"680px",margin:"0 auto" }}>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px" }}>
@@ -519,16 +551,18 @@ export default function WheelOfLife() {
               <span style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",fontWeight:700,letterSpacing:"1px",color:"rgba(255,255,255,0.25)" }}>{name.toUpperCase()}'S ASSESSMENT</span>
             </div>
             <div style={{ height:"4px",background:"rgba(255,255,255,0.08)",borderRadius:"2px",overflow:"hidden" }}>
-              <div style={{ width:`${progress}%`,height:"100%",background:"#fff",borderRadius:"2px",transition:"width 0.4s" }} />
+              <div style={{ width:`${progress}%`,height:"100%",background:C.accent,borderRadius:"2px",transition:"width 0.4s" }} />
             </div>
           </div>
         </div>
+
         <div style={{ maxWidth:"680px",margin:"0 auto",padding:"28px 20px 40px",animation:animateIn?"fadeUp 0.4s ease forwards":"none",opacity:animateIn?1:0 }}>
           <h2 style={{ fontFamily:"'Playfair Display',serif",fontSize:"26px",fontWeight:800,color:C.text,margin:"0 0 6px",textAlign:"center" }}>
             Rate Your <em style={{ color:AREAS[currentArea].color,fontStyle:"italic",fontWeight:700 }}>Satisfaction</em>
           </h2>
           <p style={{ textAlign:"center",fontSize:"14px",color:C.muted,margin:"0 0 28px" }}>How satisfied are you in this area right now? Be honest.</p>
           <ScoreSlider area={AREAS[currentArea]} value={scores[AREAS[currentArea].key]} onChange={val=>handleScore(AREAS[currentArea].key,val)} />
+
           <div style={{ display:"flex",gap:"6px",justifyContent:"center",margin:"28px 0 24px",flexWrap:"wrap" }}>
             {AREAS.map((a,i)=>(
               <button key={a.key} onClick={()=>{setCurrentArea(i);setAnimateIn(false);setTimeout(()=>setAnimateIn(true),30);}}
@@ -538,13 +572,14 @@ export default function WheelOfLife() {
               </button>
             ))}
           </div>
+
           <div style={{ display:"flex",justifyContent:"space-between",gap:"12px" }}>
             <button onClick={()=>{if(currentArea>0){setCurrentArea(p=>p-1);setAnimateIn(false);setTimeout(()=>setAnimateIn(true),30);}else setPhase("welcome");}}
               style={{ padding:"12px 24px",background:"transparent",color:C.muted,fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:"14px",border:"none",borderRadius:"10px",cursor:"pointer" }}>
               ← {currentArea>0?"Previous":"Back"}
             </button>
             <button onClick={()=>{if(currentArea<AREAS.length-1){setCurrentArea(p=>p+1);setAnimateIn(false);setTimeout(()=>setAnimateIn(true),30);}else setPhase("results");}}
-              style={{ padding:"12px 32px",background:C.dark,color:"#fff",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:"15px",border:"none",borderRadius:"50px",cursor:"pointer",transition:"all 0.2s" }}>
+              style={{ padding:"12px 32px",background:C.accent,color:"#fff",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:"15px",border:"none",borderRadius:"8px",cursor:"pointer",transition:"all 0.2s" }}>
               {currentArea<AREAS.length-1?"Next Area →":"See My Results →"}
             </button>
           </div>
@@ -557,12 +592,14 @@ export default function WheelOfLife() {
   return (
     <div style={{ minHeight:"100vh",background:C.bg,fontFamily:"'DM Sans',sans-serif" }}>
       <style>{css}</style>
+      <NavBar />
+
       <div style={{ background:C.dark,padding:"40px 20px 50px",textAlign:"center",position:"relative",overflow:"hidden" }}>
         <div style={{ position:"absolute",inset:0,backgroundImage:"repeating-linear-gradient(90deg,rgba(255,255,255,0.015) 0,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 60px),repeating-linear-gradient(0deg,rgba(255,255,255,0.015) 0,rgba(255,255,255,0.015) 1px,transparent 1px,transparent 60px)" }} />
         <div style={{ position:"relative",zIndex:1,maxWidth:"680px",margin:"0 auto" }}>
           <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",fontWeight:700,letterSpacing:"3px",textTransform:"uppercase",color:"rgba(255,255,255,0.35)",marginBottom:"12px" }}>THE CIRCLE · YOUR RESULTS</div>
           <h1 style={{ fontFamily:"'Playfair Display',serif",fontSize:"32px",fontWeight:800,color:"#fff",margin:"0 0 6px",lineHeight:1.2 }}>
-            {name}'s Wheel of <em style={{ fontStyle:"italic",color:"rgba(255,255,255,0.55)" }}>Life</em>
+            {name}'s Wheel of <em style={{ fontStyle:"italic",color:"rgba(232,214,180,0.7)" }}>Life</em>
           </h1>
           <p style={{ fontSize:"13px",color:"rgba(255,255,255,0.35)",margin:"8px 0 0" }}>{today}</p>
         </div>
@@ -570,12 +607,10 @@ export default function WheelOfLife() {
 
       <div style={{ maxWidth:"680px",margin:"0 auto",padding:"0 20px 60px",animation:animateIn?"fadeUp 0.6s ease forwards":"none",opacity:animateIn?1:0 }}>
 
-        {/* Radar */}
-        <div className="results-radar-chart" style={{ background:C.card,borderRadius:"16px",border:`1px solid ${C.border}`,padding:"40px 20px 30px",marginTop:"-30px",boxShadow:"0 4px 20px rgba(0,0,0,0.06)",textAlign:"center",animation:animateIn?"scaleIn 0.6s ease 0.2s forwards":"none" }}>
+        <div className="results-radar-chart" style={{ background:C.card,borderRadius:"16px",border:`1px solid ${C.border}`,padding:"40px 20px 30px",marginTop:"-30px",boxShadow:"0 4px 24px rgba(44,36,22,0.08)",textAlign:"center",animation:animateIn?"scaleIn 0.6s ease 0.2s forwards":"none" }}>
           <RadarChart scores={scores} />
         </div>
 
-        {/* Scores */}
         <div style={{ marginTop:"28px" }}>
           <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",fontWeight:700,letterSpacing:"1.5px",textTransform:"uppercase",color:C.muted2,marginBottom:"14px" }}>DETAILED SCORES</div>
           <div style={{ display:"flex",flexDirection:"column",gap:"8px" }}>
@@ -596,11 +631,10 @@ export default function WheelOfLife() {
           </div>
         </div>
 
-        {/* Strengths / Growth */}
         <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:"14px",marginTop:"28px" }}>
           {[
-            { title:"YOUR STRENGTHS", list:highest3, color:"#4CAF80" },
-            { title:"GROWTH AREAS",   list:lowest3,  color:"#E8845C" },
+            { title:"YOUR STRENGTHS", list:highest3, color:"#4A8C5C" },
+            { title:"GROWTH AREAS",   list:lowest3,  color:"#C4733A" },
           ].map(({title,list,color})=>(
             <div key={title} style={{ background:C.card,borderRadius:"14px",border:`1px solid ${C.border}`,borderLeft:`4px solid ${color}`,padding:"20px" }}>
               <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",fontWeight:700,letterSpacing:"1.2px",textTransform:"uppercase",color,marginBottom:"12px" }}>{title}</div>
@@ -615,17 +649,15 @@ export default function WheelOfLife() {
           ))}
         </div>
 
-        {/* AI Analysis — the beefy part */}
         <AIAnalysisSection analysis={aiAnalysis} loading={aiLoading} error={aiError} />
 
-        {/* Action buttons */}
         <div style={{ display:"flex",gap:"12px",marginTop:"32px",flexWrap:"wrap",justifyContent:"center" }}>
           <button onClick={downloadPDF} disabled={pdfLoading||aiLoading}
-            style={{ padding:"15px 36px",background:(pdfLoading||aiLoading)?"#E5E5E3":C.dark,color:(pdfLoading||aiLoading)?C.muted2:"#fff",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:"15px",border:"none",borderRadius:"50px",cursor:(pdfLoading||aiLoading)?"wait":"pointer",transition:"all 0.2s",display:"flex",alignItems:"center",gap:"8px" }}>
+            style={{ padding:"15px 36px",background:(pdfLoading||aiLoading)?"#C8C4B4":C.accent,color:"#fff",fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:"15px",border:"none",borderRadius:"8px",cursor:(pdfLoading||aiLoading)?"wait":"pointer",transition:"all 0.2s",display:"flex",alignItems:"center",gap:"8px" }}>
             {pdfLoading?"⏳ Generating PDF...":aiLoading?"⏳ Preparing analysis...":"📄 Download PDF"}
           </button>
           <button onClick={()=>{setPhase("assess");setCurrentArea(0);setAiAnalysis(null);}}
-            style={{ padding:"15px 28px",background:"transparent",color:C.muted,fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:"14px",border:`2px solid ${C.border2}`,borderRadius:"50px",cursor:"pointer",transition:"all 0.2s" }}>
+            style={{ padding:"15px 28px",background:"transparent",color:C.muted,fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:"14px",border:`1.5px solid ${C.border2}`,borderRadius:"8px",cursor:"pointer",transition:"all 0.2s" }}>
             ↩ Retake Assessment
           </button>
         </div>
